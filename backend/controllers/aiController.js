@@ -1,12 +1,14 @@
 import { GoogleGenAI } from '@google/genai';
+import dotenv from 'dotenv';
+dotenv.config();
 
-const genAI = new GoogleGenAI({ apiKey: import.meta.env.VITE_GEMINI_API_KEY || '' });
+const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
 
 const MODEL = 'gemini-flash-latest';
 
-const callGemini = async (prompt: string, imageBase64?: string, mimeType?: string): Promise<string> => {
+const callGemini = async (prompt, imageBase64, mimeType) => {
   try {
-    const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [{ text: prompt }];
+    const parts = [{ text: prompt }];
     if (imageBase64 && mimeType) {
       parts.push({ inlineData: { mimeType, data: imageBase64 } });
     }
@@ -15,19 +17,13 @@ const callGemini = async (prompt: string, imageBase64?: string, mimeType?: strin
       contents: [{ role: 'user', parts }],
     });
     return response.text || 'No response generated.';
-  } catch (err: unknown) {
+  } catch (err) {
     console.error('Gemini API error:', err);
     return 'AI service is currently unavailable. Please try again later.';
   }
 };
 
-export const detectScam = async (message: string, language: string): Promise<{
-  verdict: 'safe' | 'suspicious' | 'scam';
-  confidence: number;
-  explanation: string;
-  scamType: string;
-  advice: string;
-}> => {
+export const detectScam = async (message, language) => {
   const prompt = `You are an Indian scam detection expert. Analyze this message for scam patterns common in India (UPI fraud, OTP scams, fake KYC, lottery scams, job scams, loan app scams, electricity disconnection threats, etc).
 
 Message: "${message}"
@@ -44,13 +40,7 @@ Respond in ${language} language. Return ONLY valid JSON:
   }
 };
 
-export const analyzeDocument = async (imageBase64: string, mimeType: string, language: string): Promise<{
-  title: string;
-  summary: string;
-  actionItems: string[];
-  deadlines: string[];
-  department: string;
-}> => {
+export const analyzeDocument = async (imageBase64, mimeType, language) => {
   const prompt = `You are an expert in Indian government and legal documents. Analyze this document image. Extract all important information efficiently and explain it in simple ${language} language that even a non-educated person can easily understand. Be concise but highly accurate.
 
 Respond ONLY in valid JSON:
@@ -65,13 +55,7 @@ Respond ONLY in valid JSON:
   }
 };
 
-export const generateRTI = async (userQuery: string, language: string): Promise<{
-  department: string;
-  pio: string;
-  application: string;
-  filingSteps: string[];
-  fee: string;
-}> => {
+export const generateRTI = async (userQuery, language) => {
   const prompt = `You are an expert RTI (Right to Information) advisor in India. A citizen wants to know: "${userQuery}"
 
 Generate a legally valid RTI application in ${language}. Include:
@@ -91,12 +75,7 @@ Respond ONLY in valid JSON:
   }
 };
 
-export const analyzePriceQuote = async (material: string, brand: string, price: number, priceUnit: string, quantity: number, unit: string, city: string, language: string, imageBase64?: string, mimeType?: string): Promise<{
-  verdict: 'fair' | 'overpriced' | 'underpriced';
-  avgPrice: number;
-  difference: string;
-  advice: string;
-}> => {
+export const analyzePriceQuote = async (material, brand, price, priceUnit, quantity, unit, city, language, imageBase64, mimeType) => {
   const prompt = `Indian Construction Cost Expert: City=${city}, Material=${material}, Brand=${brand}, Qty=${quantity} ${unit}.
 User entered Price: ₹${price} (${priceUnit}).
 ${imageBase64 ? 'Analyze attached image (bill/material) for brand/quality.' : ''}
@@ -113,12 +92,7 @@ Response MUST be strict minified JSON in ${language}:
   }
 };
 
-export const detectMaterialFromImage = async (imageBase64: string, mimeType: string): Promise<{
-  material: string;
-  brand: string;
-  quantity: string;
-  unit: string;
-}> => {
+export const detectMaterialFromImage = async (imageBase64, mimeType) => {
   const prompt = `Analyze Indian construction material/bill image.
 Identify: material (cement|steel|sand|bricks|paint|tiles), brand (e.g. UltraTech, Tata Tiscon, Asian Paints or 'Local'), quantity (number), and unit (e.g. bag, kg, ton, cft, pieces, liter).
 Response MUST be strict minified JSON, no markdown, no other text:
@@ -133,11 +107,7 @@ Response MUST be strict minified JSON, no markdown, no other text:
   }
 };
 
-export const predictWaterTiming = async (logs: string[], area: string, language: string): Promise<{
-  prediction: string;
-  confidence: string;
-  pattern: string;
-}> => {
+export const predictWaterTiming = async (logs, area, language) => {
   const prompt = `You are analyzing municipal water supply patterns in India. Based on these recent water arrival timestamps for area "${area}":
 ${logs.join('\n')}
 
@@ -155,12 +125,7 @@ Return ONLY valid JSON:
   }
 };
 
-export const analyzeMedicine = async (imageBase64: string, mimeType: string, language: string): Promise<{
-  medicineName: string;
-  purpose: string;
-  genericAlternative: string;
-  estimatedSavings: string;
-}> => {
+export const analyzeMedicine = async (imageBase64, mimeType, language) => {
   const prompt = `You are a highly accurate Indian pharmacist. Analyze this medicine image with 95%+ accuracy.
 Provide: 1. The medicine name. 2. Its main purpose in simple terms. 3. A cheaper generic alternative (Jan Aushadhi equivalent if possible). 4. Estimated cost savings percentage.
 Respond entirely in ${language}. Return ONLY valid JSON, no markdown, no other text:
@@ -175,11 +140,7 @@ Respond entirely in ${language}. Return ONLY valid JSON, no markdown, no other t
   }
 };
 
-export const analyzeTrafficOrConsumerIssue = async (issue: string, type: 'traffic' | 'consumer', language: string): Promise<{
-  advice: string;
-  draft: string;
-  fineOrRights: string;
-}> => {
+export const analyzeTrafficOrConsumerIssue = async (issue, type, language) => {
   const prompt = `You are an expert Indian lawyer providing advice with 95%+ accuracy.
 Scenario: ${type === 'traffic' ? 'Traffic Police Stop' : 'Consumer Rights Dispute'}
 Issue: "${issue}"
@@ -196,9 +157,7 @@ Respond entirely in ${language}. Return ONLY valid JSON, nothing else:
   }
 };
 
-export const findGovtSchemes = async (age: string, gender: string, income: string, occupation: string, language: string): Promise<{
-  schemes: Array<{ name: string; benefits: string; eligibility: string; howToApply: string }>;
-}> => {
+export const findGovtSchemes = async (age, gender, income, occupation, language) => {
   const prompt = `You are an Indian Government Welfare Scheme expert.
 User Profile: Age: ${age}, Gender: ${gender}, Annual Income: ₹${income}, Occupation: ${occupation}.
 Analyze the demographic data with 95%+ accuracy to find the top 3 best matching state or central government schemes for this specific person.
@@ -214,12 +173,7 @@ Respond entirely in ${language}. Return ONLY valid JSON, nothing else:
   }
 };
 
-export const analyzeElectricityBill = async (imageBase64: string, mimeType: string, language: string): Promise<{
-  totalAmount: string;
-  slabBreakdown: string;
-  anomalyDetected: boolean;
-  advice: string;
-}> => {
+export const analyzeElectricityBill = async (imageBase64, mimeType, language) => {
   const prompt = `You are an Indian electricity board expert. Analyze this electricity bill or meter reading image with 95%+ accuracy.
 Extract the exact total amount. Explain the unit slabs simply. Accurately highlight if the reading/bill looks unusually high (anomaly). Give actionable advice to reduce the bill or dispute it.
 Respond entirely in ${language}. Return ONLY valid JSON, no markdown, no other text:
@@ -234,12 +188,7 @@ Respond entirely in ${language}. Return ONLY valid JSON, no markdown, no other t
   }
 };
 
-export const analyzeCropDisease = async (imageBase64: string, mimeType: string, language: string): Promise<{
-  disease: string;
-  severity: string;
-  treatment: string;
-  preventiveMeasures: string;
-}> => {
+export const analyzeCropDisease = async (imageBase64, mimeType, language) => {
   const prompt = `You are an expert Indian agricultural scientist (Krishi Mitra). Analyze this crop image with 95%+ accuracy.
 Identify the exact disease. Determine the severity. Suggest highly effective local/generic pesticide or organic treatment. Give proven preventive advice.
 Respond entirely in ${language}. Return ONLY valid JSON, no markdown, no other text:
