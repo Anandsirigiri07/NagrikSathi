@@ -62,7 +62,3 @@ vite.config.ts: Configuration for the build tool.
 6. License
 Specify how others can use your code (e.g., MIT License).
 
-Pro-Tip: Add a "Status" section
-Since I see test-key.js and list-models.js in your file list, it looks like you are currently in the Development/Testing phase. Mentioning this helps visitors understand that some features might still be in progress.
-
-Would you like me to draft the actual Markdown code for you to copy and paste?
