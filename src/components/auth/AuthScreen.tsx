@@ -21,6 +21,7 @@ export const AuthScreen: React.FC = () => {
     try {
       setLoading(true); setError('');
       const verifier = setupRecaptcha('recaptcha-container');
+      if (!verifier) throw new Error("Recaptcha failed to initialize.");
       const result = await signInWithPhone(phone, verifier);
       setConfirmation(result); setMode('otp');
     } catch (e: any) { setError(e.message); } finally { setLoading(false); }
